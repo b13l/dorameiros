@@ -24,6 +24,9 @@ let previewShown = false;
 let controlsTimeout = null;
 let temporadasEpisodios = {};
 
+// URL do Cloudflare Worker (proxy)
+const PROXY_URL = 'https://proxy-dorameiros.b13lia2026.workers.dev';
+
 // ----- IndexedDB -----
 function initLocalDB() {
   return new Promise((resolve, reject) => {
@@ -96,7 +99,7 @@ async function fetchSeriesList() {
   const user = cfg.usuario;
   const pass = cfg.senha;
 
-  const catUrl = `${base}/player_api.php?username=${user}&password=${pass}&action=get_series_categories`;
+  const catUrl = `${PROXY_URL}/player_api.php?username=${user}&password=${pass}&action=get_series_categories`;
   const catResp = await fetch(catUrl);
   if (!catResp.ok) throw new Error('Erro categorias');
   const categoriasSeries = await catResp.json();
@@ -106,7 +109,8 @@ async function fetchSeriesList() {
   console.log('🆔 IDs dorama:', idsDorama);
   if (idsDorama.length === 0) return [];
 
-  const seriesUrl = `${base}/player_api.php?username=${user}&password=${pass}&action=get_series`;
+  const seriesUrl = `${PROXY_URL}/player_api.php?username=${user}&password=${pass}&action=get_series`;
+
   const seriesResp = await fetch(seriesUrl);
   if (!seriesResp.ok) throw new Error('Erro séries');
   const todasSeriesRaw = await seriesResp.json();
@@ -137,7 +141,7 @@ async function fetchEpisodiosAgrupados(seriesId) {
   const base = cfg.urlBase.replace(/\/+$/, '');
   const user = cfg.usuario;
   const pass = cfg.senha;
-  const infoUrl = `${base}/player_api.php?username=${user}&password=${pass}&action=get_series_info&series_id=${seriesId}`;
+  const infoUrl = `${PROXY_URL}/player_api.php?username=${user}&password=${pass}&action=get_series_info&series_id=${seriesId}`;
   const infoResp = await fetch(infoUrl);
   if (!infoResp.ok) throw new Error('Erro ao buscar episódios');
   const info = await infoResp.json();
@@ -552,8 +556,7 @@ async function reproduzirEpisodio(episodio, serie) {
   const base = cfg.urlBase.replace(/\/+$/, '');
   const user = cfg.usuario;
   const pass = cfg.senha;
-  const videoURL = `${base}/series/${user}/${pass}/${episodio.streamId}.${episodio.container}`;
-  console.log('▶ Reproduzindo:', videoURL);
+  const videoURL = `${PROXY_URL}/series/${user}/${pass}/${episodio.streamId}.${episodio.container}`;
 
   const player = document.getElementById('modalPlayer');
   player.src = videoURL;
