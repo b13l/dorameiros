@@ -1,13 +1,13 @@
 const CACHE_NAME = 'dorameiros-v2';
 const STATIC = [
-  '/',
-  '/index.html',
-  '/login.html',
-  '/style.css',
-  '/app.js',
-  '/auth.js',
-  '/firebase-config.js',
-  '/manifest.json'
+  '/dorameiros/',
+  '/dorameiros/index.html',
+  '/dorameiros/login.html',
+  '/dorameiros/style.css',
+  '/dorameiros/app.js',
+  '/dorameiros/auth.js',
+  '/dorameiros/firebase-config.js',
+  '/dorameiros/manifest.json'
 ];
 
 self.addEventListener('install', e => {
