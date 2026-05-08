@@ -24,6 +24,23 @@ let previewShown = false;
 let controlsTimeout = null;
 let temporadasEpisodios = {};
 
+// Função para redirecionar URLs de imagem pelo proxy
+function proxyImageUrl(originalUrl) {
+  if (!originalUrl) return '';
+  // Se já for HTTPS ou começar com //, não precisa
+  if (originalUrl.startsWith('https://') || originalUrl.startsWith('//')) return originalUrl;
+  // Substitui o domínio base pelo proxy
+  // Supondo que as imagens venham de http://cdnthor.top:80/...
+  // Podemos simplesmente substituir 'http://cdnthor.top:80' por PROXY_URL
+  // Mas pode haver outras origens; faremos uma substituição segura.
+  const basePattern = 'http://cdnthor.top:80';
+  if (originalUrl.startsWith(basePattern)) {
+    return originalUrl.replace(basePattern, PROXY_URL);
+  }
+  // Fallback: prefixa com proxy genérico (menos eficiente, mas funciona)
+  return `${PROXY_URL}/?url=${encodeURIComponent(originalUrl)}`;
+}
+
 // URL do Cloudflare Worker (proxy)
 const PROXY_URL = 'https://proxy-dorameiros.b13lia2026.workers.dev';
 
@@ -218,6 +235,20 @@ async function carregarFavoritos() {
   `).join('');
 }
 
+function proxyImageUrl(url) {
+  if (!url) return '';
+  // Se a URL já está no domínio do proxy ou é HTTPS, retorna como está
+  if (url.startsWith('https://') || url.startsWith(PROXY_URL)) return url;
+  // Substitui a base do servidor pela base do proxy
+  // Assumindo que a URL da imagem é http://cdnthor.top:80/...
+  const baseServidor = 'http://cdnthor.top:80';
+  if (url.startsWith(baseServidor)) {
+    return url.replace(baseServidor, PROXY_URL);
+  }
+  // Outros casos: tenta construir com proxy (pode não funcionar se o servidor de imagem for outro)
+  return `${PROXY_URL}/${url.replace(/https?:\/\/[^/]+/, '')}`;
+}
+
 async function toggleFavorito() {
   if (!serieAtual) return;
   const seriesId = serieAtual.series_id;
@@ -372,7 +403,7 @@ function renderizarSeries() {
   const container = document.getElementById('lista-dramas');
   container.innerHTML = seriesVisiveis.map(s => `
     <div class="card" onclick="abrirSerie('${s.series_id}')">
-      <img src="${s.thumbnail}" alt="${s.titulo}" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22400%22%3E%3Crect fill=%22%23333%22 width=%22300%22 height=%22400%22/%3E%3Ctext fill=%22%23fff%22 x=%2220%22 y=%22200%22 font-size=%2218%22%3ESem capa%3C/text%3E%3C/svg%3E';">
+      <img src="${proxyImageUrl(s.thumbnail)}" alt="${s.titulo}" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22400%22%3E%3Crect fill=%22%23333%22 width=%22300%22 height=%22400%22/%3E%3Ctext fill=%22%23fff%22 x=%2220%22 y=%22200%22 font-size=%2218%22%3ESem capa%3C/text%3E%3C/svg%3E';">
       <h3>${s.titulo}</h3>
       <span class="genero">${s.genero}</span>
     </div>
@@ -587,7 +618,7 @@ function mostrarPreviaProximo(serie, idxProximo) {
   previewShown = true;
   const proxEp = serie.episodiosFlat[idxProximo];
   const overlay = document.getElementById('previaOverlay');
-  document.getElementById('previaThumb').src = serie.thumbnail || '';
+  document.getElementById('previaThumb').src = proxyImageUrl(serie.thumbnail) || '';
   document.getElementById('previaTitulo').textContent = proxEp.tituloEpisodio;
   overlay.style.display = 'flex';
 
