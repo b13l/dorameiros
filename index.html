@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dorameiros Prime</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0f0f23">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>⭐🎬 Dorameiros</h1>
+      <nav class="header-nav">
+        <a href="#" onclick="mostrarSecao('inicio')">🏠 Início</a>
+        <a href="#" onclick="mostrarSecao('planos')">💳 Planos</a>
+        <a href="#" onclick="mostrarSecao('favoritos')">⭐ Favoritos</a>
+        <a href="#" onclick="auth.signOut().then(()=>window.location='login.html')">🚪 Sair</a>
+      </nav>
+    </header>
+
+    <main>
+      <div id="favoritosContainer" class="grid" style="display:none;"></div>
+      <div id="trial-banner" style="display:none;"></div>
+      <div id="filtros">
+        <input type="text" id="busca" placeholder="🔍 Buscar dorama...">
+        <select id="filtroCategoria">
+          <option value="todas">Todas as categorias</option>
+        </select>
+      </div>
+      <div id="lista-dramas" class="grid"></div>
+
+      <!-- Modal do Player -->
+      <div id="playerModal">
+        <div class="modal-header">
+          <h2 id="modalTitulo"></h2>
+          <div>
+            <button id="btnFavorito" onclick="toggleFavorito()">☆</button>
+            <button onclick="fecharPlayer()">✕</button>
+          </div>
+        </div>
+
+        <div class="player-wrapper" id="playerWrapper">
+          <video id="modalPlayer" playsinline></video>
+          
+          <!-- Overlay de controles -->
+          <div id="playerControls" class="player-controls">
+            <div class="controls-top">
+              <button onclick="fecharPlayer()" class="btn-voltar">← Voltar</button>
+              <span id="infoEpisodio"></span>
+              <button onclick="abrirPainelEpisodios()">📋 Episódios</button>
+            </div>
+            <div class="controls-bottom">
+              <button id="btnAnterior" onclick="episodioAnterior()">⏮</button>
+              <button id="playPauseBtn" onclick="togglePlayPause()">⏯️</button>
+              <button id="btnProximo" onclick="proximoEpisodio()">⏭</button>
+              <input type="range" id="progressBar" value="0" step="0.1">
+              <span id="timeDisplay">00:00 / 00:00</span>
+              <button onclick="toggleFullscreen()">⛶</button>
+            </div>
+          </div>
+
+          <!-- Prévia do próximo episódio -->
+          <div id="previaOverlay" class="previa-overlay">
+            <div class="previa-card">
+              <img id="previaThumb" src="" alt="">
+              <div class="previa-info">
+                <span>Próximo episódio em <span id="previaCountdown">30</span>s</span>
+                <h4 id="previaTitulo"></h4>
+                <div class="previa-botoes">
+                  <button onclick="cancelarPrevia()" class="btn-cancelar">Cancelar</button>
+                  <button onclick="proximoEpisodio()" class="btn-assistir">▶ Assistir agora</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Painel de episódios (temporadas) -->
+          <div id="painelEpisodios" class="painel-episodios">
+            <div class="painel-header">
+              <h3>Episódios</h3>
+              <button onclick="fecharPainelEpisodios()">✕</button>
+            </div>
+            <div id="temporadasContainer"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="paywall" style="display:none;">
+        <h2>⏰ Seu período de teste acabou</h2>
+        <p>Escolha um plano para continuar assistindo:</p>
+        <div id="planosContainer" class="grid"></div>
+        <p>Após realizar o pagamento, envie o comprovante para o WhatsApp do suporte.</p>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

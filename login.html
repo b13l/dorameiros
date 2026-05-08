@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entrar | Dorameiros</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="/manifest.json">
+</head>
+<body>
+  <div class="login-container">
+    <h1>🎬 Dorameiros Prime</h1>
+    <form id="authForm">
+      <input type="email" id="email" placeholder="E-mail" required>
+      <input type="password" id="senha" placeholder="Senha" required>
+      <div id="cadastroExtra" style="display:none;">
+        <input type="text" id="whatsapp" placeholder="WhatsApp (com DDD)">
+      </div>
+      <div class="checkbox">
+        <label>
+          <input type="checkbox" id="isCadastro"> Criar nova conta
+        </label>
+      </div>
+      <button type="submit">Entrar</button>
+    </form>
+    <p id="erro" style="color:red; display:none;"></p>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="auth.js"></script>
+</body>
+</html>

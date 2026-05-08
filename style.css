@@ -1,0 +1,346 @@
+/* Fundo preto brilhante */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: #000;         /* ← Preto total */
+  color: #ffffff;
+  min-height: 100vh;
+}
+
+header {
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  backdrop-filter: blur(5px);
+  flex-wrap: wrap;
+}
+
+header h1 {
+  color: #ff3131;                     /* Vermelho vivo */
+  text-shadow: 0 0 10px #ff3131,      /* Brilho neon vermelho */
+               0 0 20px #ff3131;
+  font-weight: bold;
+  margin: 0;
+}
+
+.header-nav {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.header-nav a {
+  color: #ff0000;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.header-nav a:hover {
+  color: #e94560;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.card, .card-plano {
+  background: #000000;
+  border-radius: 10px;
+  overflow: hidden;
+  text-align: center;
+  padding-bottom: 0.5rem;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.card:hover {
+  transform: scale(1.02);
+}
+
+.card img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  background: #1a1a2e;
+}
+
+button {
+  background: #e94560;
+  border: none;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s;
+}
+
+button:hover {
+  background: #c23152;
+}
+
+.login-container, .admin-container {
+  max-width: 400px;
+  margin: 4rem auto;
+  padding: 2rem;
+  background: #1a1a2e;
+  border-radius: 10px;
+}
+
+input, select {
+  width: 100%;
+  padding: 0.5rem;
+  margin: 0.5rem 0;
+  border: none;
+  border-radius: 5px;
+  background: #000000;
+  color: #fff;
+}
+
+#paywall {
+  text-align: center;
+  padding: 2rem;
+}
+
+.preco {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+#trial-banner {
+  background: transparent;
+  color: #e94560;
+  text-shadow: 0 0 10px #e94560;
+  font-weight: bold;
+  padding: 0.5rem;
+  text-align: center;
+}
+
+#filtros {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0 1rem;
+}
+
+.genero {
+  display: block;
+  font-size: 0.8rem;
+  color: #aaa;
+  margin: 0.2rem 0;
+}
+
+/* Player */
+#playerModal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: black;
+  z-index: 2000;
+  flex-direction: column;
+}
+
+.player-wrapper {
+  flex: 1;
+  position: relative;
+  background: #000;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#modalPlayer {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: black;
+}
+
+.player-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(231, 7, 7, 0.9), transparent);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.3s, visibility 0.3s;
+  z-index: 20;
+}
+
+.controls-top, .controls-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: #fff;
+}
+
+.controls-top button, .controls-bottom button {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+#progressBar {
+  flex: 1;
+  height: 4px;
+  background: #0e0e0e;
+  border-radius: 2px;
+  -webkit-appearance: none;
+}
+
+#progressBar::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  background: #e94560;
+  border-radius: 50%;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #000000;
+}
+
+/* Painel de episódios */
+.painel-episodios {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 300px;
+  max-width: 80%;
+  height: 100%;
+  background: rgba(26,26,46,0.98);
+  z-index: 30;
+  display: none;
+  flex-direction: column;
+  overflow-y: auto;
+  box-shadow: -2px 0 10px rgba(0,0,0,0.5);
+}
+
+.painel-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem;
+  background: #111;
+}
+
+.temporada-grupo {
+  padding: 0.5rem 1rem;
+}
+
+.temporada-grupo h4 {
+  color: #e94560;
+  margin: 0.5rem 0;
+}
+
+.episodios-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ep-card-mini {
+  background: #16213e;
+  border-radius: 5px;
+  padding: 0.5rem;
+  cursor: pointer;
+  text-align: center;
+  min-width: 40px;
+  border: 1px solid transparent;
+}
+
+.ep-card-mini.ativo {
+  border-color: #e94560;
+  box-shadow: 0 0 5px #e94560;
+}
+
+/* Prévia */
+.previa-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, transparent 100%);
+  padding: 2rem 1rem 1rem;
+  z-index: 25;
+  display: none;
+}
+
+.previa-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(26,26,46,0.9);
+  padding: 1rem;
+  border-radius: 10px;
+}
+
+.previa-card img {
+  width: 100px;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 5px;
+}
+
+.previa-info span {
+  font-size: 0.8rem;
+  color: #aaa;
+}
+
+.previa-botoes {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.btn-cancelar {
+  background: transparent;
+  border: 1px solid #aaa;
+  color: #aaa;
+  border-radius: 5px;
+  padding: 0.3rem 1rem;
+  cursor: pointer;
+}
+
+.btn-assistir {
+  background: #e94560;
+  border: none;
+  border-radius: 5px;
+  padding: 0.3rem 1rem;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .header-nav {
+    flex-wrap: wrap;
+    gap: 0.8rem;
+  }
+  .painel-episodios {
+    width: 100%;
+  }
+}
