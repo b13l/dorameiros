@@ -23,26 +23,10 @@ let previewTimeout = null;
 let previewShown = false;
 let controlsTimeout = null;
 let temporadasEpisodios = {};
-
-// Função para redirecionar URLs de imagem pelo proxy
-function proxyImageUrl(originalUrl) {
-  if (!originalUrl) return '';
-  // Se já for HTTPS ou começar com //, não precisa
-  if (originalUrl.startsWith('https://') || originalUrl.startsWith('//')) return originalUrl;
-  // Substitui o domínio base pelo proxy
-  // Supondo que as imagens venham de http://cdnthor.top:80/...
-  // Podemos simplesmente substituir 'http://cdnthor.top:80' por PROXY_URL
-  // Mas pode haver outras origens; faremos uma substituição segura.
-  const basePattern = 'http://cdnthor.top:80';
-  if (originalUrl.startsWith(basePattern)) {
-    return originalUrl.replace(basePattern, PROXY_URL);
-  }
-  // Fallback: prefixa com proxy genérico (menos eficiente, mas funciona)
-  return `${PROXY_URL}/?url=${encodeURIComponent(originalUrl)}`;
-}
-
-// URL do Cloudflare Worker (proxy)
-const PROXY_URL = 'https://proxy-dorameiros.b13lia2026.workers.dev';
+let audioTracksDisponiveis = [];
+let legendaTracksDisponiveis = [];
+let audioAtualIndex = 0;
+let legendaAtualIndex = -1; // -1 = desativada
 
 // ----- IndexedDB -----
 function initLocalDB() {
@@ -116,7 +100,7 @@ async function fetchSeriesList() {
   const user = cfg.usuario;
   const pass = cfg.senha;
 
-  const catUrl = `${PROXY_URL}/player_api.php?username=${user}&password=${pass}&action=get_series_categories`;
+  const catUrl = `${base}/player_api.php?username=${user}&password=${pass}&action=get_series_categories`;
   const catResp = await fetch(catUrl);
   if (!catResp.ok) throw new Error('Erro categorias');
   const categoriasSeries = await catResp.json();
@@ -126,8 +110,7 @@ async function fetchSeriesList() {
   console.log('🆔 IDs dorama:', idsDorama);
   if (idsDorama.length === 0) return [];
 
-  const seriesUrl = `${PROXY_URL}/player_api.php?username=${user}&password=${pass}&action=get_series`;
-
+  const seriesUrl = `${base}/player_api.php?username=${user}&password=${pass}&action=get_series`;
   const seriesResp = await fetch(seriesUrl);
   if (!seriesResp.ok) throw new Error('Erro séries');
   const todasSeriesRaw = await seriesResp.json();
@@ -158,7 +141,7 @@ async function fetchEpisodiosAgrupados(seriesId) {
   const base = cfg.urlBase.replace(/\/+$/, '');
   const user = cfg.usuario;
   const pass = cfg.senha;
-  const infoUrl = `${PROXY_URL}/player_api.php?username=${user}&password=${pass}&action=get_series_info&series_id=${seriesId}`;
+  const infoUrl = `${base}/player_api.php?username=${user}&password=${pass}&action=get_series_info&series_id=${seriesId}`;
   const infoResp = await fetch(infoUrl);
   if (!infoResp.ok) throw new Error('Erro ao buscar episódios');
   const info = await infoResp.json();
@@ -170,14 +153,17 @@ async function fetchEpisodiosAgrupados(seriesId) {
     Object.keys(info.episodes).sort((a, b) => a - b).forEach(numTemp => {
       const eps = info.episodes[numTemp];
       if (Array.isArray(eps)) {
-        const episodiosTemp = eps.map(ep => ({
-          id: String(ep.id),
-          tituloEpisodio: ep.title || `Ep ${ep.episode_num}`,
-          streamId: ep.id,
-          container: ep.container_extension || 'mp4',
-          numero: ep.episode_num || 0,
-          temporada: Number(numTemp)
-        }));
+    const episodiosTemp = eps.map(ep => ({
+  id: String(ep.id),
+  tituloEpisodio: ep.title || `Ep ${ep.episode_num}`,
+  streamId: ep.id,
+  container: ep.container_extension || 'mp4',
+  numero: ep.episode_num || 0,
+  temporada: Number(numTemp),
+  // Novos campos para áudio e legenda (arrays vazios por padrão)
+  audios: ep.audios || [],
+  subtitles: ep.subtitles || []
+}));
         temporadas[numTemp] = episodiosTemp;
         flat.push(...episodiosTemp);
       }
@@ -235,20 +221,6 @@ async function carregarFavoritos() {
   `).join('');
 }
 
-function proxyImageUrl(url) {
-  if (!url) return '';
-  // Se a URL já está no domínio do proxy ou é HTTPS, retorna como está
-  if (url.startsWith('https://') || url.startsWith(PROXY_URL)) return url;
-  // Substitui a base do servidor pela base do proxy
-  // Assumindo que a URL da imagem é http://cdnthor.top:80/...
-  const baseServidor = 'http://cdnthor.top:80';
-  if (url.startsWith(baseServidor)) {
-    return url.replace(baseServidor, PROXY_URL);
-  }
-  // Outros casos: tenta construir com proxy (pode não funcionar se o servidor de imagem for outro)
-  return `${PROXY_URL}/${url.replace(/https?:\/\/[^/]+/, '')}`;
-}
-
 async function toggleFavorito() {
   if (!serieAtual) return;
   const seriesId = serieAtual.series_id;
@@ -262,7 +234,7 @@ async function toggleFavorito() {
   }
 }
 
-// ----- Navegação do cabeçalho (antigo menu lateral) -----
+// ----- Navegação do cabeçalho -----
 function mostrarSecao(secao) {
   document.getElementById('lista-dramas').style.display = 'none';
   document.getElementById('paywall').style.display = 'none';
@@ -403,7 +375,7 @@ function renderizarSeries() {
   const container = document.getElementById('lista-dramas');
   container.innerHTML = seriesVisiveis.map(s => `
     <div class="card" onclick="abrirSerie('${s.series_id}')">
-      <img src="${proxyImageUrl(s.thumbnail)}" alt="${s.titulo}" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22400%22%3E%3Crect fill=%22%23333%22 width=%22300%22 height=%22400%22/%3E%3Ctext fill=%22%23fff%22 x=%2220%22 y=%22200%22 font-size=%2218%22%3ESem capa%3C/text%3E%3C/svg%3E';">
+      <img src="${s.thumbnail}" alt="${s.titulo}" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22400%22%3E%3Crect fill=%22%23333%22 width=%22300%22 height=%22400%22/%3E%3Ctext fill=%22%23fff%22 x=%2220%22 y=%22200%22 font-size=%2218%22%3ESem capa%3C/text%3E%3C/svg%3E';">
       <h3>${s.titulo}</h3>
       <span class="genero">${s.genero}</span>
     </div>
@@ -416,7 +388,19 @@ const playerModal = document.getElementById('playerModal');
 async function abrirSerie(seriesId) {
   document.getElementById('modalTitulo').textContent = 'Carregando...';
   playerModal.style.display = 'flex';
+  
+  // Força modo imersivo (oculta barras do sistema) via JavaScript
+if (window.Android && window.Android.hideSystemUI) {
+  // Caso a interface nativa esteja disponível
+  window.Android.hideSystemUI();
+} else {
+  // Fallback: rolar a página e ajustar viewport
+  document.body.scrollIntoView();
+  window.scrollTo(0, 1);
+}
+  
   document.getElementById('painelEpisodios').style.display = 'none';
+  
 
   let dados;
   try {
@@ -487,6 +471,32 @@ function fecharPainelEpisodios() {
   document.getElementById('painelEpisodios').style.display = 'none';
   document.getElementById('playerControls').style.display = 'flex';
   resetControlsTimeout();
+}
+
+function alternarAudio() {
+  if (!audioTracksDisponiveis.length) return;
+  audioAtualIndex = (audioAtualIndex + 1) % audioTracksDisponiveis.length;
+  audioTracksDisponiveis.forEach((track, i) => {
+    track.enabled = (i === audioAtualIndex);
+  });
+  alert(`Áudio alterado para faixa ${audioAtualIndex + 1}`);
+}
+
+function alternarLegenda() {
+  if (!legendaTracksDisponiveis.length) return;
+  // Desativa a legenda atual, se houver
+  if (legendaAtualIndex >= 0) {
+    legendaTracksDisponiveis[legendaAtualIndex].mode = 'hidden';
+  }
+  legendaAtualIndex = (legendaAtualIndex + 1) % (legendaTracksDisponiveis.length + 1);
+  // Se voltou ao "sem legenda"
+  if (legendaAtualIndex === legendaTracksDisponiveis.length) {
+    legendaAtualIndex = -1;
+    alert('Legenda desativada');
+  } else {
+    legendaTracksDisponiveis[legendaAtualIndex].mode = 'showing';
+    alert(`Legenda alterada para faixa ${legendaAtualIndex + 1}`);
+  }
 }
 
 // ================== CONTROLES PERSONALIZADOS ==================
@@ -564,12 +574,29 @@ function togglePlayPause() {
   else player.pause();
 }
 
-function toggleFullscreen() {
-  const wrapper = document.getElementById('playerWrapper');
-  if (!document.fullscreenElement) {
-    wrapper.requestFullscreen();
+// Variáveis de estado
+let aspectRatioMode = 'contain'; // 'contain' ou 'cover'
+
+// Função para alternar redimensionamento da imagem do vídeo
+function alternarAspectRatio() {
+  const player = document.getElementById('modalPlayer');
+  aspectRatioMode = (aspectRatioMode === 'contain') ? 'cover' : 'contain';
+  player.style.objectFit = aspectRatioMode;
+  // Feedback visual rápido (opcional)
+  const btn = document.getElementById('btnAspectRatio');
+  btn.textContent = aspectRatioMode === 'contain' ? '🔲' : '⬜';
+}
+
+function alternarFullscreen() {
+  const modal = document.getElementById('playerModal');
+  if (!modal) return;
+  modal.classList.toggle('fullscreen-ativo');
+  // Se acabou de entrar em fullscreen, reexibe os controles brevemente e depois esconde
+  if (modal.classList.contains('fullscreen-ativo')) {
+    showControls();
   } else {
-    document.exitFullscreen();
+    // Ao sair, garante que os controles fiquem visíveis
+    showControls();
   }
 }
 
@@ -587,10 +614,40 @@ async function reproduzirEpisodio(episodio, serie) {
   const base = cfg.urlBase.replace(/\/+$/, '');
   const user = cfg.usuario;
   const pass = cfg.senha;
-  const videoURL = `${PROXY_URL}/series/${user}/${pass}/${episodio.streamId}.${episodio.container}`;
+  const videoURL = `${base}/series/${user}/${pass}/${episodio.streamId}.${episodio.container}`;
 
   const player = document.getElementById('modalPlayer');
   player.src = videoURL;
+  
+  // Aguardar metadados para acessar audioTracks e textTracks
+player.onloadedmetadata = () => {
+  // Configurar áudios disponíveis
+  audioTracksDisponiveis = player.audioTracks ? Array.from(player.audioTracks) : [];
+  if (audioTracksDisponiveis.length > 1) {
+    document.getElementById('btnAudio').style.display = 'inline-block';
+  } else {
+    document.getElementById('btnAudio').style.display = 'none';
+  }
+  
+  // Configurar legendas (textTracks)
+  legendaTracksDisponiveis = player.textTracks ? Array.from(player.textTracks) : [];
+  if (legendaTracksDisponiveis.length > 1) {
+    document.getElementById('btnLegenda').style.display = 'inline-block';
+  } else {
+    document.getElementById('btnLegenda').style.display = 'none';
+  }
+  
+  // Definir faixas padrão (primeiro áudio, sem legenda)
+  if (audioTracksDisponiveis.length > 0) {
+    audioTracksDisponiveis.forEach((track, i) => track.enabled = (i === 0));
+    audioAtualIndex = 0;
+  }
+  if (legendaTracksDisponiveis.length > 0) {
+    legendaTracksDisponiveis.forEach(track => track.mode = 'hidden');
+    legendaAtualIndex = -1;
+  }
+};
+  
   player.play().catch(err => console.error(err));
 
   episodioAtualGlobal = episodio.id;
@@ -599,8 +656,6 @@ async function reproduzirEpisodio(episodio, serie) {
 
   renderizarPainelTemporadas(serie.temporadas);
 
-  // O ontimeupdate global (setupPlayerControls) já cuida de progresso e prévia.
-  // Reaplicamos o onended para garantir autoavanço se a prévia não apareceu.
   player.onended = () => {
     if (indiceAtualGlobal < serie.episodiosFlat.length - 1) {
       if (!previewShown) {
@@ -618,7 +673,7 @@ function mostrarPreviaProximo(serie, idxProximo) {
   previewShown = true;
   const proxEp = serie.episodiosFlat[idxProximo];
   const overlay = document.getElementById('previaOverlay');
-  document.getElementById('previaThumb').src = proxyImageUrl(serie.thumbnail) || '';
+  document.getElementById('previaThumb').src = serie.thumbnail || '';
   document.getElementById('previaTitulo').textContent = proxEp.tituloEpisodio;
   overlay.style.display = 'flex';
 
