@@ -344,3 +344,62 @@ input, select {
     width: 100%;
   }
 }
+
+
+/* Ajusta o botão de sair */
+#btnSairFullscreen {
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+/* Botões centrais flutuantes */
+#btnAspectRatio,
+#btnFullscreen {
+  background: rgba(0,0,0,0.5);
+  border: 1px solid #fff;
+  font-size: 1.4rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+}
+
+/* Melhora a transição do object-fit */
+#modalPlayer {
+  transition: object-fit 0.3s ease;
+}
+
+/* Fullscreen imersivo (substitui o antigo .fullscreen-simulado) */
+#playerModal.fullscreen-ativo {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 9999 !important;
+  background: #000 !important;
+}
+
+/* Quando em fullscreen, esconde o cabeçalho e mantém apenas o player wrapper */
+#playerModal.fullscreen-ativo .modal-header,
+#playerModal.fullscreen-ativo .controles-episodios,
+#playerModal.fullscreen-ativo .lista-episodios-wrapper {
+  display: none !important;
+}
+
+/* Player wrapper ocupa tudo */
+#playerModal.fullscreen-ativo .player-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Se quiser que os controles de player apareçam ao toque (já estão sendo gerenciados pelo JS) */
+#playerModal.fullscreen-ativo .player-controls {
+  /* continuam funcionando via show/hide */
+}
+
+/* Remove a classe antiga .fullscreen-simulado para evitar conflito */
+.fullscreen-simulado {
+  /* não precisa mais */
+}
